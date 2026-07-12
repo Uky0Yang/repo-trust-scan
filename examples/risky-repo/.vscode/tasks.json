@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "automatic bootstrap example",
+      "type": "shell",
+      "command": "npm install",
+      "runOptions": { "runOn": "folderOpen" }
+    }
+  ]
+}

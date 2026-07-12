@@ -1,0 +1,29 @@
+name: Rule request
+description: Propose an explainable repository trust-surface check
+title: "rule: "
+labels: [enhancement, rule]
+body:
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Trust boundary
+      description: What repository-controlled behavior crosses into execution or agent authority?
+    validations:
+      required: true
+  - type: textarea
+    id: signal
+    attributes:
+      label: Deterministic signal
+      description: Describe the bounded, testable signal without model inference.
+    validations:
+      required: true
+  - type: textarea
+    id: safe
+    attributes:
+      label: Legitimate cases and false positives
+    validations:
+      required: true
+  - type: textarea
+    id: fixture
+    attributes:
+      label: Minimal public fixture

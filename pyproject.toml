@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repo-trust-scan"
+version = "0.1.0"
+description = "Preflight untrusted repositories before opening them with an AI coding agent"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Uky0Yang" }]
+keywords = ["ai-agents", "security", "repository", "prompt-injection", "developer-tools"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Uky0Yang/repo-trust-scan"
+Issues = "https://github.com/Uky0Yang/repo-trust-scan/issues"
+Source = "https://github.com/Uky0Yang/repo-trust-scan"
+
+[project.scripts]
+repo-trust-scan = "repo_trust_scan.cli:main"
+rts = "repo_trust_scan.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["repo_trust_scan"]

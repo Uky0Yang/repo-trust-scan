@@ -1,0 +1,40 @@
+name: repo-trust-scan
+description: Find repository-controlled execution surfaces before granting an AI coding agent trust
+author: Uky0Yang
+branding:
+  icon: shield
+  color: purple
+inputs:
+  path:
+    description: Repository directory to scan
+    required: false
+    default: .
+  fail-on:
+    description: Minimum severity that fails the step (none, low, medium, high, critical)
+    required: false
+    default: high
+  upload-sarif:
+    description: Upload findings to GitHub code scanning
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+    - name: Install repo-trust-scan
+      shell: bash
+      run: python -m pip install "${{ github.action_path }}"
+    - name: Scan repository
+      shell: bash
+      env:
+        RTS_INPUT_PATH: ${{ inputs.path }}
+        RTS_FAIL_ON: ${{ inputs.fail-on }}
+      run: repo-trust-scan scan "$RTS_INPUT_PATH" --format sarif --output repo-trust-scan.sarif --fail-on "$RTS_FAIL_ON"
+    - name: Upload SARIF
+      if: ${{ always() && inputs.upload-sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: repo-trust-scan.sarif

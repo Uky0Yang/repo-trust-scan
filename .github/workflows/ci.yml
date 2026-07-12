@@ -39,3 +39,14 @@ jobs:
       - run: python -m build
       - run: python -m pip install dist/*.whl
       - run: repo-trust-scan --version
+
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - uses: ./
+        with:
+          path: examples/risky-repo
+          fail-on: none
+          upload-sarif: "false"
+      - run: test -s repo-trust-scan.sarif

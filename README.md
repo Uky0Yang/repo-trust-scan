@@ -120,7 +120,7 @@ jobs:
   trust-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.0
       - uses: Uky0Yang/repo-trust-scan@v0.1.0
         with:
           path: .

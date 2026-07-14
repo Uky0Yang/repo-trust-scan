@@ -15,6 +15,8 @@ python -m compileall -q repo_trust_scan tests
 python -m repo_trust_scan scan . --fail-on critical
 ```
 
+The baseline and policy parsers are security boundaries. Changes must preserve explicit opt-in: never auto-load configuration or suppressions from the scan target.
+
 New checks should have a clear trust boundary, bounded false-positive behavior, a stable rule ID, documentation, and tests for both detection and a nearby safe case.
 
 The self-scan uses a `critical` threshold because the scanner implementation and fixtures intentionally contain the patterns that lower-severity rules detect.

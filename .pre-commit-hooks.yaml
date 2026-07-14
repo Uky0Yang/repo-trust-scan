@@ -1,0 +1,7 @@
+- id: repo-trust-scan
+  name: repo-trust-scan
+  description: Report repository-controlled execution surfaces before trust is granted.
+  entry: repo-trust-scan scan
+  language: python
+  pass_filenames: false
+  always_run: true

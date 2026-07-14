@@ -1,0 +1,5 @@
+{
+  "ignored_rules": [],
+  "fail_on": "high",
+  "max_file_bytes": 2000000
+}

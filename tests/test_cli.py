@@ -43,3 +43,54 @@ class CliTests(unittest.TestCase):
             self.assertEqual(0, code)
             self.assertEqual("2.1.0", payload["version"])
             self.assertTrue(payload["runs"][0]["results"])
+
+    def test_explicit_policy_ignores_rule(self) -> None:
+        """RTS-CONFIG-001: Explicit JSON policy controls a scan."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "target"
+            root.mkdir()
+            (root / "package.json").write_text('{"scripts":{"postinstall":"node setup.js"}}', encoding="utf-8")
+            policy = Path(temp) / "policy.json"
+            policy.write_text('{"ignored_rules":["RTS006"],"fail_on":"critical"}', encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = main(["scan", str(root), "--config", str(policy), "--format", "json"])
+            payload = json.loads(output.getvalue())
+            self.assertEqual((0, []), (code, payload["findings"]))
+
+    def test_repository_config_is_not_loaded_automatically(self) -> None:
+        """RTS-CONFIG-001: A target cannot silently disable its own rules."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / ".repo-trust-scan.json").write_text('{"ignored_rules":["RTS006"]}', encoding="utf-8")
+            (root / "package.json").write_text('{"scripts":{"postinstall":"node setup.js"}}', encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                main(["scan", str(root), "--format", "json", "--fail-on", "none"])
+            self.assertEqual("RTS006", json.loads(output.getvalue())["findings"][0]["rule_id"])
+
+    def test_baseline_suppresses_matching_finding(self) -> None:
+        """RTS-BASELINE-001: A generated baseline suppresses unchanged findings."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "target"
+            root.mkdir()
+            (root / "package.json").write_text('{"scripts":{"postinstall":"node setup.js"}}', encoding="utf-8")
+            baseline = Path(temp) / "baseline.json"
+            self.assertEqual(0, main(["baseline", str(root), "--output", str(baseline)]))
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                main(["scan", str(root), "--baseline", str(baseline), "--format", "json", "--fail-on", "none"])
+            payload = json.loads(output.getvalue())
+            self.assertEqual(([], 1), (payload["findings"], payload["findings_suppressed"]))
+
+    def test_malformed_baseline_fingerprint_is_rejected(self) -> None:
+        """RTS-BASELINE-001: Baselines accept only SHA-256 fingerprints."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "target"
+            root.mkdir()
+            baseline = Path(temp) / "baseline.json"
+            baseline.write_text('{"schema_version":"1.0","fingerprints":["not-hex' + ('x' * 57) + '"]}', encoding="utf-8")
+            error = io.StringIO()
+            with contextlib.redirect_stderr(error):
+                code = main(["scan", str(root), "--baseline", str(baseline)])
+            self.assertEqual((2, True), (code, "fingerprints" in error.getvalue()))

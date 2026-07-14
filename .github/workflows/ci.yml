@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.13"]
+        python-version: ["3.10", "3.14"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.0
@@ -49,4 +49,5 @@ jobs:
           path: examples/risky-repo
           fail-on: none
           upload-sarif: "false"
+          config: examples/trusted-policy.json
       - run: test -s repo-trust-scan.sarif

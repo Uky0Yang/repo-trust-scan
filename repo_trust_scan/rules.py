@@ -20,6 +20,9 @@ RULES: dict[str, Rule] = {
     "RTS009": Rule("RTS009", "medium", "Encoded or dynamic shell execution", "A script uses encoded input or dynamic evaluation that obscures behavior.", "Replace it with auditable commands and avoid eval or encoded PowerShell."),
     "RTS010": Rule("RTS010", "low", "Repository Git hook", "The repository contains a Git hook or hook template that may be installed locally.", "Review the hook and document how it is installed; never install it implicitly."),
     "RTS011": Rule("RTS011", "low", "Agent instruction requests command execution", "Agent-facing text asks the agent to run a command automatically.", "Require explicit human approval and explain why the command is necessary."),
+    "RTS012": Rule("RTS012", "medium", "Repository-provided Copilot hook", "A repository GitHub Copilot hook can execute shell commands during an agent session.", "Review every hook command and event before using Copilot in the repository."),
+    "RTS013": Rule("RTS013", "medium", "Repository-provided MCP server", "A repository configuration can start an MCP server process for an AI client.", "Review the server command, arguments, environment, and package source before enabling it."),
+    "RTS014": Rule("RTS014", "high", "Shell-wrapped MCP server command", "An MCP server configuration launches through a general-purpose shell.", "Invoke a reviewed executable directly and avoid shell wrappers or command strings."),
 }
 
 SKIP_DIRS = {".git", ".hg", ".svn", "node_modules", ".venv", "venv", "dist", "build", "__pycache__", ".tox", ".mypy_cache", ".pytest_cache"}
@@ -93,14 +96,73 @@ def _scan_text(relative: Path, text: str) -> list[Finding]:
     if path.lower() in {".claude/settings.json", ".claude/settings.local.json"} and re.search(r'["\']hooks["\']\s*:', text, re.I):
         findings.append(_finding("RTS008", path, 1, "Claude project settings define executable hooks."))
 
-    parts = {part.lower() for part in relative.parts}
+    lower_parts = tuple(part.lower() for part in relative.parts)
+    if len(lower_parts) >= 3 and lower_parts[0:2] == (".github", "hooks") and relative.suffix.lower() == ".json":
+        try:
+            hook_data = json.loads(text)
+            if isinstance(hook_data, dict) and isinstance(hook_data.get("hooks"), dict):
+                findings.append(_finding("RTS012", path, 1, "GitHub Copilot repository hook configuration defines executable events."))
+        except json.JSONDecodeError:
+            pass
+
+    mcp_paths = {".mcp.json", "mcp.json", ".github/mcp.json", ".vscode/mcp.json", ".cursor/mcp.json"}
+    if path.lower() in mcp_paths:
+        try:
+            mcp_data = json.loads(_strip_json_comments(text))
+            servers = mcp_data.get("mcpServers", mcp_data.get("servers", {})) if isinstance(mcp_data, dict) else {}
+            process_servers = {name: server for name, server in servers.items() if isinstance(server, dict) and "command" in server} if isinstance(servers, dict) else {}
+            if process_servers:
+                findings.append(_finding("RTS013", path, 1, f"MCP configuration defines {len(process_servers)} local server process(es)."))
+                shells = {"sh", "bash", "zsh", "cmd", "cmd.exe", "powershell", "powershell.exe", "pwsh", "pwsh.exe"}
+                for server_name, server in process_servers.items():
+                    command = server.get("command")
+                    executable = command[0] if isinstance(command, list) and command else command
+                    if isinstance(executable, str) and Path(executable).name.lower() in shells:
+                        findings.append(_finding("RTS014", path, 1, f"MCP server {server_name!r} launches through shell {executable!r}.", json.dumps(server, ensure_ascii=False)))
+        except json.JSONDecodeError:
+            pass
+
+    parts = set(lower_parts)
     if ".githooks" in parts or ("hooks" in parts and relative.name.lower() in {"pre-commit", "post-checkout", "post-merge", "pre-push", "prepare-commit-msg"}):
         findings.append(_finding("RTS010", path, 1, "Repository contains a Git hook or hook template."))
     return findings
 
 
 def _strip_json_comments(text: str) -> str:
-    return re.sub(r"//.*?$|/\*.*?\*/", "", text, flags=re.M | re.S)
+    output: list[str] = []
+    index = 0
+    in_string = False
+    escaped = False
+    while index < len(text):
+        char = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if in_string:
+            output.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            index += 1
+            continue
+        if char == '"':
+            in_string = True
+            output.append(char)
+            index += 1
+        elif char == "/" and following == "/":
+            index += 2
+            while index < len(text) and text[index] not in "\r\n":
+                index += 1
+        elif char == "/" and following == "*":
+            index += 2
+            while index + 1 < len(text) and text[index:index + 2] != "*/":
+                index += 1
+            index = min(len(text), index + 2)
+        else:
+            output.append(char)
+            index += 1
+    return "".join(output)
 
 
 def scan_repository(root: Path, *, max_file_bytes: int = 2_000_000, ignored_rules: set[str] | None = None) -> ScanReport:

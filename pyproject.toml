@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "repo-trust-scan"
-version = "0.1.0"
+version = "0.2.0"
 description = "Preflight untrusted repositories before opening them with an AI coding agent"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,6 +20,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Security",
   "Topic :: Software Development :: Quality Assurance",
 ]
@@ -29,6 +30,7 @@ dependencies = []
 Homepage = "https://github.com/Uky0Yang/repo-trust-scan"
 Issues = "https://github.com/Uky0Yang/repo-trust-scan/issues"
 Source = "https://github.com/Uky0Yang/repo-trust-scan"
+Changelog = "https://github.com/Uky0Yang/repo-trust-scan/releases"
 
 [project.scripts]
 repo-trust-scan = "repo_trust_scan.cli:main"

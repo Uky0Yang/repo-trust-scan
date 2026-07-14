@@ -35,6 +35,7 @@ class ScanReport:
     root: Path
     files_scanned: int = 0
     files_skipped: int = 0
+    findings_suppressed: int = 0
     findings: list[Finding] = field(default_factory=list)
 
     @property
@@ -56,6 +57,7 @@ class ScanReport:
             "risk_score": self.risk_score,
             "files_scanned": self.files_scanned,
             "files_skipped": self.files_skipped,
+            "findings_suppressed": self.findings_suppressed,
             "counts": self.counts,
             "findings": [finding.to_dict() for finding in self.findings],
         }

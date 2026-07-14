@@ -1,0 +1,22 @@
+release: "0.2.0"
+requirements:
+  - id: RTS-CONFIG-001
+    description: Load an explicitly selected JSON policy without trusting repository defaults.
+    test: unit
+    code: done
+  - id: RTS-BASELINE-001
+    description: Create and apply stable finding baselines while reporting suppressed findings.
+    test: unit
+    code: done
+  - id: RTS-RULE-012
+    description: Report repository-provided GitHub Copilot hooks as an execution surface.
+    test: unit
+    code: done
+  - id: RTS-RULE-013
+    description: Report repository-provided MCP server configurations as an execution surface.
+    test: unit
+    code: done
+  - id: RTS-RULE-014
+    description: Escalate MCP server configurations that invoke a shell wrapper.
+    test: unit
+    code: done

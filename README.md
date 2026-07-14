@@ -1,18 +1,18 @@
 # repo-trust-scan
 
 [![CI](https://github.com/Uky0Yang/repo-trust-scan/actions/workflows/ci.yml/badge.svg)](https://github.com/Uky0Yang/repo-trust-scan/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/repo-trust-scan.svg)](https://pypi.org/project/repo-trust-scan/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Preflight an untrusted repository **before** opening it with Claude Code, Codex, Cursor, Copilot, or another coding agent.
 
-`repo-trust-scan` is a dependency-free Python CLI that finds repository-controlled execution surfaces: automatic editor tasks, agent hooks, devcontainer lifecycle commands, package install hooks, escaping symlinks, hidden Unicode in agent instructions, download-and-execute chains, and credential-transfer patterns.
+`repo-trust-scan` is a dependency-free Python CLI and GitHub Action that finds repository-controlled execution surfaces: automatic editor tasks, Claude and Copilot hooks, MCP server configurations, devcontainer lifecycle commands, package install hooks, escaping symlinks, hidden Unicode in agent instructions, download-and-execute chains, and credential-transfer patterns.
 
 It is for developers who clone unfamiliar repositories, security reviewers who triage agent-ready projects, and maintainers who want transparent checks in CI.
 
 ```bash
-python -m pip install git+https://github.com/Uky0Yang/repo-trust-scan.git
-repo-trust-scan scan ./untrusted-repo
+uvx repo-trust-scan ./untrusted-repo
 ```
 
 > A clean result is not proof that a repository is safe. The scanner narrows manual review to known trust-boundary surfaces; it does not execute code, call a model, or claim to detect all malware or prompt injection.
@@ -22,6 +22,16 @@ repo-trust-scan scan ./untrusted-repo
 Coding agents read repository instructions and may run project commands with the developer's local permissions. Normal developer conveniences—folder-open tasks, lifecycle scripts, hooks, and devcontainers—therefore become security-relevant before trust is established.
 
 Most scanners answer “is this code vulnerable?” `repo-trust-scan` asks a narrower first question: **what can this repository cause my tools or agent to execute, and what deserves review before I grant trust?**
+
+## Install
+
+Run once with `uv`, install as an isolated CLI, or use pip:
+
+```bash
+uvx repo-trust-scan ./untrusted-repo
+pipx install repo-trust-scan
+python -m pip install repo-trust-scan
+```
 
 ## Quick start
 
@@ -57,11 +67,26 @@ Review an accepted finding without disabling other checks:
 repo-trust-scan scan . --ignore RTS006
 ```
 
+Use an explicit trusted policy:
+
+```bash
+repo-trust-scan ./target --config ../security-policy/repo-trust-scan.json
+```
+
+Create a baseline for already-reviewed findings, then surface only changes:
+
+```bash
+repo-trust-scan baseline ./target --output ../trusted-baselines/target.json
+repo-trust-scan ./target --baseline ../trusted-baselines/target.json
+```
+
+Policy and baseline files are never discovered automatically. Keep them outside an untrusted target so the repository cannot suppress its own findings. See [examples/trusted-policy.json](examples/trusted-policy.json) and [the suppression guidance](docs/rules.md#suppression).
+
 ## Example output
 
 ```text
 repo-trust-scan scanned 3 text file(s) under /work/untrusted-repo
-risk=45/100 critical=0 high=2 medium=1 low=1 skipped=0
+risk=45/100 critical=0 high=2 medium=1 low=1 skipped=0 suppressed=0
 
 [HIGH] RTS005 .vscode/tasks.json:1 Task 'bootstrap' runs when the folder opens.
   fix: Remove runOn=folderOpen or require an explicit, reviewed invocation.
@@ -90,6 +115,9 @@ repo-trust-scan examples/risky-repo --fail-on none
 | `RTS009` | medium | Encoded PowerShell or dynamic encoded shell execution |
 | `RTS010` | low | Repository Git hook or hook template |
 | `RTS011` | low | Agent instruction requests automatic command execution |
+| `RTS012` | medium | Repository-provided GitHub Copilot hook |
+| `RTS013` | medium | Repository-provided MCP server configuration |
+| `RTS014` | high | MCP server command launched through a general-purpose shell |
 
 Run `repo-trust-scan rules` for the installed rule set. See [docs/threat-model.md](docs/threat-model.md) for scope and assumptions and [docs/rules.md](docs/rules.md) for interpretation guidance.
 
@@ -121,7 +149,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
-      - uses: Uky0Yang/repo-trust-scan@v0.1.0
+      - uses: Uky0Yang/repo-trust-scan@v0.2.0
         with:
           path: .
           fail-on: high
@@ -129,6 +157,21 @@ jobs:
 ```
 
 The Action runs static reads only. It does not install repository dependencies, start containers, or invoke project scripts.
+
+## pre-commit
+
+Run the scanner before commits without passing changed filenames as scan targets:
+
+```yaml
+repos:
+  - repo: https://github.com/Uky0Yang/repo-trust-scan
+    rev: v0.2.0
+    hooks:
+      - id: repo-trust-scan
+        args: [--fail-on, high]
+```
+
+`pre-commit` is convenient for repositories you already trust. For unfamiliar repositories, scan from a trusted checkout location before installing any repository tooling.
 
 ## Design principles
 
@@ -148,6 +191,8 @@ The Action runs static reads only. It does not install repository dependencies, 
 ## Contributing
 
 False-positive reports and small, reproducible fixtures are especially useful. Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a rule. Security-sensitive reports belong in [SECURITY.md](SECURITY.md).
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## License
 

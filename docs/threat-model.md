@@ -14,7 +14,7 @@ The primary user has cloned a repository whose contents are not yet trusted and 
 
 ## Trust boundaries
 
-Repository content crosses a trust boundary when another tool interprets it as instructions or executable configuration. Examples include agent instruction files, VS Code tasks, package lifecycle scripts, devcontainer commands, Git hooks, and symlinks.
+Repository content crosses a trust boundary when another tool interprets it as instructions or executable configuration. Examples include agent instruction files, VS Code tasks, package lifecycle scripts, devcontainer commands, Git hooks, Copilot hooks, MCP server configurations, and symlinks.
 
 ## In scope
 
@@ -23,6 +23,7 @@ Repository content crosses a trust boundary when another tool interprets it as i
 - Agent-facing hidden Unicode controls
 - Links that resolve outside the scan root
 - Output suitable for manual review and CI
+- Explicit trusted policies and baselines; target repositories never configure the scanner automatically
 
 ## Out of scope
 

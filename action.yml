@@ -17,6 +17,14 @@ inputs:
     description: Upload findings to GitHub code scanning
     required: false
     default: "false"
+  config:
+    description: Explicit JSON policy path. Keep trusted policies outside untrusted scan targets.
+    required: false
+    default: ""
+  baseline:
+    description: Explicit baseline path. Keep trusted baselines outside untrusted scan targets.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -32,7 +40,13 @@ runs:
       env:
         RTS_INPUT_PATH: ${{ inputs.path }}
         RTS_FAIL_ON: ${{ inputs.fail-on }}
-      run: repo-trust-scan scan "$RTS_INPUT_PATH" --format sarif --output repo-trust-scan.sarif --fail-on "$RTS_FAIL_ON"
+        RTS_CONFIG: ${{ inputs.config }}
+        RTS_BASELINE: ${{ inputs.baseline }}
+      run: |
+        args=(scan "$RTS_INPUT_PATH" --format sarif --output repo-trust-scan.sarif --fail-on "$RTS_FAIL_ON")
+        if [[ -n "$RTS_CONFIG" ]]; then args+=(--config "$RTS_CONFIG"); fi
+        if [[ -n "$RTS_BASELINE" ]]; then args+=(--baseline "$RTS_BASELINE"); fi
+        repo-trust-scan "${args[@]}"
     - name: Upload SARIF
       if: ${{ always() && inputs.upload-sarif == 'true' }}
       uses: github/codeql-action/upload-sarif@v4

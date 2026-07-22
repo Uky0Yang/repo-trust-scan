@@ -2,6 +2,15 @@
 
 All notable changes are documented here. The project follows semantic versioning while the CLI and output schemas stabilize.
 
+## 0.2.1 — 2026-07-22
+
+### Changed
+
+- Add a terminal demo, real scan output, scanner comparison, and copyable GitHub Actions workflow to the README
+- Add a 1280×640 social preview asset for repository sharing
+- Update pinned GitHub Actions dependencies
+- Publish the reusable action to GitHub Marketplace
+
 ## 0.2.0 — 2026-07-14
 
 ### Added

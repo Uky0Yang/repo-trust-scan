@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: Uky0Yang/repo-trust-scan@v0
+      - uses: Uky0Yang/repo-trust-scan@v0.2.1
         with:
           path: .
           fail-on: high

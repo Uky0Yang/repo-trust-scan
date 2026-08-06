@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: Uky0Yang/repo-trust-scan@v0.2.0
+      - uses: Uky0Yang/repo-trust-scan@v0
         with:
           path: .
           fail-on: high
@@ -186,7 +186,7 @@ Run the scanner before commits without passing changed filenames as scan targets
 ```yaml
 repos:
   - repo: https://github.com/Uky0Yang/repo-trust-scan
-    rev: v0.2.0
+    rev: v0.2.1
     hooks:
       - id: repo-trust-scan
         args: [--fail-on, high]

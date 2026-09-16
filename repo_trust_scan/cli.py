@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .git_changes import changed_paths
 from .baseline import apply_baseline, baseline_document, load_baseline
 from .models import SEVERITY_ORDER, ScanReport
 from .policy import ScanPolicy, load_policy
@@ -29,6 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--max-file-bytes", type=int)
     scan.add_argument("--config", type=Path, help="explicit trusted JSON policy (never auto-loaded from the target)")
     scan.add_argument("--baseline", type=Path, help="suppress findings present in an explicit baseline file")
+    scan.add_argument("--changed-since", help="scan worktree files changed since a commit, plus untracked files")
     baseline = subparsers.add_parser("baseline", help="write fingerprints for the current findings")
     baseline.add_argument("path", nargs="?", default=".")
     baseline.add_argument("--output", type=Path, required=True)
@@ -51,6 +53,8 @@ def _text_report(report: ScanReport) -> str:
         f"repo-trust-scan scanned {report.files_scanned} text file(s) under {report.root}",
         f"risk={report.risk_score}/100 critical={counts['critical']} high={counts['high']} medium={counts['medium']} low={counts['low']} skipped={report.files_skipped} suppressed={report.findings_suppressed}",
     ]
+    if report.changed_since:
+        lines.append(f"Scope: changed since {report.changed_since}; unchanged files were not scanned.")
     if not report.findings:
         lines.append("No trust-boundary findings detected. This is not a guarantee that the repository is safe.")
         return "\n".join(lines) + "\n"
@@ -111,7 +115,9 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         parser.error(f"unknown rule ID(s): {', '.join(unknown)}")
     try:
-        report = scan_repository(Path(args.path), max_file_bytes=args.max_file_bytes or policy.max_file_bytes, ignored_rules=ignored_rules)
+        selected = changed_paths(Path(args.path), args.changed_since) if args.changed_since else None
+        report = scan_repository(Path(args.path), max_file_bytes=args.max_file_bytes or policy.max_file_bytes, ignored_rules=ignored_rules, only_paths=selected)
+        report.changed_since = args.changed_since
         if args.baseline:
             apply_baseline(report, load_baseline(args.baseline))
     except (OSError, ValueError) as exc:

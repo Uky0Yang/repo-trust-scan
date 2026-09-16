@@ -5,6 +5,9 @@ branding:
   icon: shield
   color: purple
 inputs:
+  changed-since:
+    description: Optional base commit for a changed-file scan; fetch base history first
+    default: ""
   path:
     description: Repository directory to scan
     required: false
@@ -42,10 +45,12 @@ runs:
         RTS_FAIL_ON: ${{ inputs.fail-on }}
         RTS_CONFIG: ${{ inputs.config }}
         RTS_BASELINE: ${{ inputs.baseline }}
+        RTS_CHANGED_SINCE: ${{ inputs.changed-since }}
       run: |
         args=(scan "$RTS_INPUT_PATH" --format sarif --output repo-trust-scan.sarif --fail-on "$RTS_FAIL_ON")
         if [[ -n "$RTS_CONFIG" ]]; then args+=(--config "$RTS_CONFIG"); fi
         if [[ -n "$RTS_BASELINE" ]]; then args+=(--baseline "$RTS_BASELINE"); fi
+        if [[ -n "$RTS_CHANGED_SINCE" ]]; then args+=(--changed-since "$RTS_CHANGED_SINCE"); fi
         repo-trust-scan "${args[@]}"
     - name: Upload SARIF
       if: ${{ always() && inputs.upload-sarif == 'true' }}

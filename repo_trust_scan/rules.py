@@ -30,7 +30,7 @@ AGENT_FILES = {"agents.md", "claude.md", ".cursorrules", "copilot-instructions.m
 TEXT_SUFFIXES = {".md", ".txt", ".json", ".jsonc", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".sh", ".bash", ".zsh", ".ps1", ".cmd", ".bat", ".py", ".js", ".ts", ".mjs", ".cjs"}
 HIDDEN_UNICODE = re.compile("[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]")
 DOWNLOAD_EXEC = re.compile(r"(?:curl|wget)[^\n|;]{0,300}(?:\||;|&&)\s*(?:sh|bash|zsh|python|node|powershell|pwsh)\b|(?:iwr|invoke-webrequest|irm|invoke-restmethod)[^\n]{0,300}\|\s*(?:iex|invoke-expression)", re.I)
-CREDENTIAL_TRANSFER = re.compile(r"(?:\.ssh|\.aws|\.azure|\.config/gcloud|id_rsa|credentials|private[_-]?key|github_token|api[_-]?key)[^\n]{0,500}(?:curl|wget|invoke-webrequest|requests\.|fetch\(|nc\s)|(?:curl|wget|invoke-webrequest|requests\.|fetch\(|nc\s)[^\n]{0,500}(?:\.ssh|\.aws|id_rsa|credentials|private[_-]?key|github_token|api[_-]?key)", re.I)
+CREDENTIAL_TRANSFER = re.compile(r"(?:\.ssh|\.aws|\.azure|\.config/gcloud|id_rsa|credentials|private[_-]?key|github_token|api[_-]?key)[^\n]{0,500}(?:\bcurl\b|\bwget\b|\binvoke-webrequest\b|\brequests\.|\bfetch\s*\(|\bnc\s)|(?:\bcurl\b|\bwget\b|\binvoke-webrequest\b|\brequests\.|\bfetch\s*\(|\bnc\s)[^\n]{0,500}(?:\.ssh|\.aws|id_rsa|credentials|private[_-]?key|github_token|api[_-]?key)", re.I)
 ENCODED_EXEC = re.compile(r"powershell(?:\.exe)?[^\n]{0,200}(?:-enc|-encodedcommand)\b|\b(?:eval|exec)\s*\(\s*(?:base64|atob)|base64\s+(?:-d|--decode)[^\n]{0,120}\|\s*(?:sh|bash)", re.I)
 RUN_REQUEST = re.compile(r"\b(?:always|immediately|automatically|before (?:doing|reading) anything)\b[^\n]{0,100}\b(?:run|execute|install|invoke)\b|\b(?:run|execute|install)\b[^\n]{0,100}\b(?:without asking|without confirmation|do not ask)\b", re.I)
 
@@ -165,7 +165,7 @@ def _strip_json_comments(text: str) -> str:
     return "".join(output)
 
 
-def scan_repository(root: Path, *, max_file_bytes: int = 2_000_000, ignored_rules: set[str] | None = None) -> ScanReport:
+def scan_repository(root: Path, *, max_file_bytes: int = 2_000_000, ignored_rules: set[str] | None = None, only_paths: set[str] | None = None) -> ScanReport:
     root = root.expanduser().resolve()
     if not root.is_dir():
         raise ValueError(f"not a directory: {root}")
@@ -179,6 +179,8 @@ def scan_repository(root: Path, *, max_file_bytes: int = 2_000_000, ignored_rule
                 continue
             if directory.is_symlink():
                 relative = directory.relative_to(root)
+                if only_paths is not None and relative.as_posix() not in only_paths:
+                    continue
                 try:
                     target = directory.resolve(strict=False)
                     target.relative_to(root)
@@ -194,6 +196,8 @@ def scan_repository(root: Path, *, max_file_bytes: int = 2_000_000, ignored_rule
         for name in sorted(files):
             path = Path(current) / name
             relative = path.relative_to(root)
+            if only_paths is not None and relative.as_posix() not in only_paths:
+                continue
             if path.is_symlink():
                 try:
                     target = path.resolve(strict=False)

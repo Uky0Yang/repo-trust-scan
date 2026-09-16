@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 — 2026-09-16
+
+- Git-aware --changed-since and Action input; CodeQL; fixed credential-transfer token boundaries to avoid async false positives; reproducible public Inspector scan.
+
+See [usage and integration details](docs/maintenance-2026-09.md).
+
 All notable changes are documented here. The project follows semantic versioning while the CLI and output schemas stabilize.
 
 ## 0.2.1 — 2026-07-22

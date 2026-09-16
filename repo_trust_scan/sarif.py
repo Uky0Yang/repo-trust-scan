@@ -11,6 +11,7 @@ def to_sarif(report: ScanReport) -> dict[str, object]:
         "version": "2.1.0",
         "runs": [
             {
+                "properties": {"changedSince": report.changed_since},
                 "tool": {
                     "driver": {
                         "name": "repo-trust-scan",

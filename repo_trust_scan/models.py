@@ -37,6 +37,7 @@ class ScanReport:
     files_skipped: int = 0
     findings_suppressed: int = 0
     findings: list[Finding] = field(default_factory=list)
+    changed_since: str | None = None
 
     @property
     def counts(self) -> dict[str, int]:
@@ -53,6 +54,7 @@ class ScanReport:
     def to_dict(self) -> dict[str, object]:
         return {
             "schema_version": "1.0",
+            "changed_since": self.changed_since,
             "root": str(self.root),
             "risk_score": self.risk_score,
             "files_scanned": self.files_scanned,

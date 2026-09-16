@@ -19,9 +19,10 @@
 
 ## Next
 
+Implemented in v0.3.0: `--changed-since` for Git-aware pull-request scanning.
+
 - More editor and agent project-hook formats backed by public specifications
 - Lockfile and package-manager install-mode guidance
-- Git-aware changed-file scanning for pull requests
 - Windows reparse-point coverage in CI
 - Signed release artifacts and provenance attestations
 

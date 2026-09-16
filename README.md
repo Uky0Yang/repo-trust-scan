@@ -1,5 +1,9 @@
 # repo-trust-scan
 
+[Real public scan: MCP Inspector](docs/public-scan-example.md) — fixed commit, reproducible commands, raw counts and manual false-positive interpretation. No target code was executed.
+
+New: Git-aware changed-file scanning for pull requests. [Usage and examples](docs/maintenance-2026-09.md).
+
 [![CI](https://github.com/Uky0Yang/repo-trust-scan/actions/workflows/ci.yml/badge.svg)](https://github.com/Uky0Yang/repo-trust-scan/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/repo-trust-scan.svg)](https://pypi.org/project/repo-trust-scan/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)

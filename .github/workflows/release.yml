@@ -23,7 +23,7 @@ jobs:
         run: python -c "import os,tomllib; assert os.environ['RELEASE_TAG'] == 'v'+tomllib.load(open('pyproject.toml','rb'))['project']['version']"
       - run: python -m build
       - run: python -m twine check dist/*
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: python-package
           path: dist/
